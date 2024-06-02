@@ -28,7 +28,7 @@ class Table(tk.Frame):
         self.labels = [[None] * columns for _ in range(rows)]
         for i in range(rows):
             for j in range(columns):
-                self.labels[i][j] = tk.Label(self.scrollable_frame, text=data[i][j], borderwidth=1, relief="solid", width=15, height=2)
+                self.labels[i][j] = tk.Label(self.scrollable_frame, text=data[i][j], borderwidth=1, relief="solid", width=25, height=2)
                 self.labels[i][j].grid(row=i, column=j, sticky="nsew")
 
         # Adjust row and column weights to make them expandable
@@ -102,6 +102,7 @@ def CSV_read (search_param,user_request):
 
 # Create the main window
 root = tk.Tk()
+root.geometry("920x600")
 root.title("Button GUI")
 
 header = tk.Label(root, text="Video game search", font=("Helvetica", 16))
