@@ -1,104 +1,84 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import simpledialog
-import csv
-headings = ["Title", "Genre", "Publisher", "Release.Console", "Release.Year"]
-class Table(tk.Frame):
-    def __init__(self, parent, data):
-        rows = len(data)
-        columns = len(data[0]) if data else 0
-
-        tk.Frame.__init__(self, parent)
-
-        # Create a canvas and add a scrollbar to it
-        self.canvas = tk.Canvas(self)
-        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas)
-
-        # Bind the scrollable frame's yview to the canvas's yview
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        # Create table headings
-        self.labels = [[None] * columns for _ in range(rows)]
-        for i in range(rows):
-            for j in range(columns):
-                self.labels[i][j] = tk.Label(self.scrollable_frame, text=data[i][j], borderwidth=1, relief="solid", width=25, height=2)
-                self.labels[i][j].grid(row=i, column=j, sticky="nsew")
-
-        # Adjust row and column weights to make them expandable
-        for i in range(rows):
-            self.grid_rowconfigure(i, weight=1)
-        for j in range(columns):
-            self.grid_columnconfigure(j, weight=1)
-
-        # Pack the canvas and scrollbar
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
-            
+import requests
 def button_1():
-    button = 0
+    button = "" 
     display_input_box(button)
-    
 
 def button_2():
-    button = 1
-    display_input_box(button)
+    button = "publishers"
+    display_input_box(button) 
     
-
 def button_3():
-    button = 2
-    display_input_box(button)
-    
-
-
-def button_4():
-    button = 3
-    display_input_box(button)
-    
-
-
-def button_5():
-    button = 4
-    display_input_box(button)
-    
-
-
-def button_6():
-    button = 5
-    display_input_box(button)
-    
-
-    
+    button = "dates"
+    display_input_box(button)    
+      
 def display_input_box(button):
     user_input = simpledialog.askstring("Input", "Enter something:")
     if user_input is not None:
-        CSV_read(button,user_input)
+        API_read(user_input,button)
         
-def CSV_read (search_param,user_request):
+
+def API_read(user_request,button):
     user_request = user_request.lower()
     data = []
+    headers = {
+        "X-RapidAPI-Key": "1220e8bca4msh0ae96f8e29fe247p1cc760jsn74cf7b671963",
+        "X-RapidAPI-Host": "rawg-video-games-database.p.rapidapi.com"
+    }
     
-    with open('Video_game_project.csv', mode='r') as file:
-        csv_reader = csv.reader(file)
-        if search_param == 5:
-            for row in csv_reader:
-                if any (user_request in cell.lower() for cell in row):
-                    data.append(row)
-        else:
-            for row in csv_reader:
-                if user_request in row[search_param].lower():
-                    data.append(row)
+    #requires search by ID
+    if button == "publishers":
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&publishers={user_request}&page_size=25"
+
+    elif button == "dates":
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&dates={user_request}&page_size=25"
+    else:
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&search={user_request}&page_size=25" 
+    
+    response = requests.get(url, headers=headers)
+    games_data = response.json()
+    total_pages = games_data.get('page_count', 0)
+    print(total_pages)
+    for i in range(0, total_pages + 1):
+        response = requests.get(url, headers=headers)
+
+            # Convert the response to JSON
+        json_data = response.json()
+
+            # Get the list of games from the JSON data
+        games = json_data.get('results', [])
+
+       
+        for game in games:
+                # Create a list of values in the correct order
+            row_list = [game.get('name', ''), game.get('released', ''), game.get('rating', '')]
+
+            if any(user_request in str(value).lower() for value in row_list):
+                data.append(row_list)
+
+            # Get the URL for the next page of results
+        url = json_data.get('next')
+
+    # Clear existing widgets
     for widget in root.winfo_children():
-        if isinstance(widget, Table):
+        if isinstance(widget, ttk.Treeview):
             widget.destroy()
-    table = Table(root,data)
-    table.pack(expand=True, fill ="both")        
+
+    # Create a Treeview widget
+    tree = ttk.Treeview(root, columns=('Name', 'Released', 'Rating'), show='headings')
+    
+    # Set the column headings
+    tree.heading('Name', text='Name')
+    tree.heading('Released', text='Released')
+    tree.heading('Rating', text='Rating')
+
+    # Add the data to the Treeview widget
+    for row in data:
+        tree.insert('', 'end', values=row)
+
+    tree.pack() 
 
 # Create the main window
 root = tk.Tk()
@@ -109,24 +89,14 @@ header = tk.Label(root, text="Video game search", font=("Helvetica", 16))
 header.pack(pady=10)  # Add some padding around the header
 
 # Create and place buttons in the window
-btn1 = tk.Button(root, text="Title", command=button_1)
+btn1 = tk.Button(root, text="Search by Name", command=button_1)
 btn1.pack(pady=5)
 
-btn2 = tk.Button(root, text="Genre", command=button_2)
+btn2 = tk.Button(root, text="Search by Publishers", command=button_2)
 btn2.pack(pady=5)
 
-btn3 = tk.Button(root, text="Publisher", command=button_3)
+btn3 = tk.Button(root, text="Search by release date", command=button_3)
 btn3.pack(pady=5)
-
-btn4 = tk.Button(root, text="Console", command=button_4)
-btn4.pack(pady=5)
-
-btn5 = tk.Button(root, text="Release year", command=button_5)
-btn5.pack(pady=5)
-
-btn6 = tk.Button(root, text="All", command=button_6)
-btn6.pack(pady=5)
-
 # Run the main event loop
 root.mainloop()
 
