@@ -2,6 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import simpledialog
 import requests
+import os
+
+RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
+RAWG_KEY = os.getenv('RAWG_KEY')
+
 def button_1():
     button = "" 
     display_input_box(button)
@@ -24,18 +29,18 @@ def API_read(user_request,button):
     user_request = user_request.lower()
     data = []
     headers = {
-        "X-RapidAPI-Key": "1220e8bca4msh0ae96f8e29fe247p1cc760jsn74cf7b671963",
+        "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": "rawg-video-games-database.p.rapidapi.com"
     }
     
     #requires search by ID
     if button == "publishers":
-        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&publishers={user_request}&page_size=25"
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key={RAWG_KEY}&publishers={user_request}&page_size=25"
 
     elif button == "dates":
-        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&dates={user_request}&page_size=25"
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key={RAWG_KEY}&dates={user_request}&page_size=25"
     else:
-        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key=ffbe944544e84b7bba0c133b3ac90b0f&search={user_request}&page_size=25" 
+        url = f"https://rawg-video-games-database.p.rapidapi.com/games?key={RAWG_KEY}&search={user_request}&page_size=25" 
     
     response = requests.get(url, headers=headers)
     games_data = response.json()
